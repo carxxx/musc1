@@ -1,0 +1,317 @@
+/* SAMC Speedo - YouTube Music Player
+ * UI-only refresh: compact, clearer, lighter on the FiveM NUI renderer.
+ * Playback / playlist logic remains in music.js.
+ */
+
+#ytm-root {
+  --ytm-bg: rgba(12, 16, 20, 0.90);
+  --ytm-bg-soft: rgba(255, 255, 255, 0.055);
+  --ytm-line: rgba(255, 255, 255, 0.11);
+  --ytm-line-soft: rgba(255, 255, 255, 0.07);
+  --ytm-text: #f0f3f5;
+  --ytm-dim: #8e99a3;
+  --ytm-accent: #2ecc71;
+  --ytm-danger: #ff5c5c;
+  position: fixed;
+  left: 14px;
+  bottom: 14px;
+  z-index: 9999;
+  width: min(360px, calc(100vw - 28px));
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  font-size: 12px;
+  color: var(--ytm-text);
+  pointer-events: none;
+  isolation: isolate;
+}
+
+#ytm-root .ytm-hide { display: none !important; }
+#ytm-root button,
+#ytm-root input { font: inherit; color: inherit; }
+#ytm-root button { cursor: pointer; }
+#ytm-root button:focus-visible,
+#ytm-root input:focus-visible {
+  outline: 2px solid var(--ytm-accent);
+  outline-offset: 1px;
+}
+
+/* Floating launcher */
+#ytm-toggle {
+  pointer-events: auto;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid var(--ytm-line);
+  border-radius: 12px;
+  background: rgba(12, 16, 20, 0.82);
+  display: grid;
+  place-items: center;
+  color: var(--ytm-accent);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.26);
+  transition: background 120ms ease, border-color 120ms ease, transform 120ms ease;
+}
+#ytm-toggle:hover {
+  background: rgba(25, 32, 38, 0.94);
+  border-color: rgba(46, 204, 113, 0.36);
+}
+#ytm-toggle:active { transform: scale(0.97); }
+
+/* Main panel */
+#ytm-panel {
+  position: absolute;
+  left: 0;
+  bottom: 48px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px;
+  border: 1px solid var(--ytm-line);
+  border-radius: 14px;
+  background: var(--ytm-bg);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.34);
+  overflow: hidden;
+  pointer-events: auto;
+  contain: layout paint;
+}
+
+.ytm-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 28px;
+  margin-bottom: 8px;
+}
+
+.ytm-brand {
+  width: 6px;
+  height: 18px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: #ff3b30;
+  box-shadow: 0 0 10px rgba(255, 59, 48, 0.22);
+}
+
+.ytm-now {
+  flex: 1;
+  min-width: 0;
+  font-weight: 650;
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ytm-source {
+  flex: 0 0 auto;
+  color: var(--ytm-dim);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* Video: keep the player area clean without adding a black UI frame. */
+.ytm-video {
+  position: relative;
+  width: 100%;
+  height: 0;
+  padding-bottom: 56.25%;
+  margin-bottom: 9px;
+  background: rgba(0, 0, 0, 0.06);
+  border: 1px solid var(--ytm-line-soft);
+  border-radius: 10px;
+  overflow: hidden;
+  contain: layout paint;
+}
+
+.ytm-video iframe,
+.ytm-video #ytm-player {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+  background: transparent;
+  pointer-events: none;
+  transform: scale(1.10);
+  transform-origin: center center;
+}
+
+/* Controls */
+.ytm-controls {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 9px;
+}
+
+.ytm-icon {
+  min-width: 30px;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  display: grid;
+  place-items: center;
+  font-size: 14px;
+  line-height: 1;
+}
+.ytm-icon:hover { background: rgba(255, 255, 255, 0.08); }
+
+.ytm-main {
+  min-width: 34px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--ytm-accent);
+  color: #0b1410 !important;
+  font-size: 13px;
+  box-shadow: 0 4px 14px rgba(46, 204, 113, 0.20);
+}
+.ytm-main:hover { background: #3fe086; }
+
+#ytm-repeat { color: var(--ytm-dim); }
+#ytm-repeat.ytm-on { color: var(--ytm-accent); }
+
+#ytm-vol {
+  flex: 1;
+  min-width: 48px;
+  margin-left: 4px;
+  accent-color: var(--ytm-accent);
+}
+
+/* Add URL */
+.ytm-add {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+#ytm-input {
+  flex: 1;
+  min-width: 0;
+  height: 31px;
+  box-sizing: border-box;
+  padding: 0 9px;
+  border: 1px solid var(--ytm-line);
+  border-radius: 8px;
+  background: var(--ytm-bg-soft);
+}
+#ytm-input::placeholder { color: var(--ytm-dim); }
+
+#ytm-add {
+  width: 34px;
+  height: 31px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: var(--ytm-accent);
+  color: #0b1410;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1;
+}
+#ytm-add:hover { background: #3fe086; }
+
+/* Messages are deliberately compact so they do not shift the panel layout. */
+.ytm-msg {
+  min-height: 0;
+  height: 0;
+  margin: 0;
+  overflow: hidden;
+  color: var(--ytm-accent);
+  transition: height 100ms ease, margin 100ms ease;
+}
+.ytm-msg.ytm-err { color: var(--ytm-danger); }
+.ytm-msg:not(:empty) {
+  height: 16px;
+  margin-top: 4px;
+}
+
+/* Playlist header / list */
+.ytm-list-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 7px 0 4px;
+  color: var(--ytm-dim);
+}
+
+#ytm-count {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ytm-link {
+  border: 0;
+  background: none;
+  padding: 2px 4px;
+  color: var(--ytm-danger) !important;
+  font-size: 10px;
+}
+.ytm-link:hover { text-decoration: underline; }
+
+#ytm-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 126px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.18) transparent;
+}
+#ytm-list li {
+  display: flex;
+  align-items: center;
+  border-radius: 8px;
+  min-height: 31px;
+}
+#ytm-list li:hover { background: rgba(255, 255, 255, 0.055); }
+#ytm-list li.ytm-active { background: rgba(46, 204, 113, 0.12); }
+#ytm-list li.ytm-active .ytm-track {
+  color: var(--ytm-accent);
+  font-weight: 650;
+}
+
+.ytm-track {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 7px;
+  border: 0;
+  background: none;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ytm-del {
+  color: var(--ytm-dim);
+  font-size: 16px;
+}
+.ytm-del:hover { color: var(--ytm-danger); }
+.ytm-empty {
+  padding: 7px 5px;
+  color: var(--ytm-dim);
+  text-align: center;
+  font-size: 11px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  #ytm-panel { animation: ytm-in 0.12s ease-out; }
+  @keyframes ytm-in {
+    from { opacity: 0; transform: translateY(3px); }
+    to { opacity: 1; transform: none; }
+  }
+}
+
+@media (max-width: 420px) {
+  #ytm-root {
+    left: 10px;
+    bottom: 10px;
+    width: calc(100vw - 20px);
+  }
+}
