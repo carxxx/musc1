@@ -69,12 +69,12 @@ let bgCanvas, bgCtx;
 
 // Speed-reactive background images. Each stage swaps the image only when a speed band changes.
 const SPEED_BG_STAGES = [
-    { max: 1,  speed: 'assets/01.png', rpm: 'assets/01.png' },
-    { max: 25,  speed: 'assets/02.png', rpm: 'assets/02.png' },
-    { max: 50, speed: 'assets/03.png', rpm: 'assets/03.png' },
-    { max: 80, speed: 'assets/04.png', rpm: 'assets/04.png' },
-    { max: 100, speed: 'assets/05.png', rpm: 'assets/05.png' },
-    { max: Infinity, speed: 'assets/06.png', rpm: 'assets/06.png' }
+    { max: 1,  speed: '01.png', rpm: '01.png' },
+    { max: 25,  speed: '02.png', rpm: '02.png' },
+    { max: 50, speed: '03.png', rpm: '03.png' },
+    { max: 80, speed: '04.png', rpm: '04.png' },
+    { max: 100, speed: '05.png', rpm: '05.png' },
+    { max: Infinity, speed: '06.png', rpm: '06.png' }
 ];
 let speedBgStage = -1;
 let speedBgReady = false;
